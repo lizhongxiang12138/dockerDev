@@ -1,8 +1,16 @@
 version: '3.2'
 
 services:
+  br:
+    image: my/br:v6.3.0
+    build: ./br
+    environment:
+      - TZ=Asia/Shanghai
+    command: ['tail', '-f', '/dev/null']
+    networks:
+      - my
   pd0:
-    image: pingcap/pd:latest
+    image: pingcap/pd:v6.3.0
     ports:
       - "2379"
     volumes:
@@ -20,8 +28,10 @@ services:
       - --config=/pd.toml
       - --log-file=/logs/pd0.log
     restart: on-failure
+    networks:
+      - my
   pd1:
-    image: pingcap/pd:latest
+    image: pingcap/pd:v6.3.0
     ports:
       - "2379"
     volumes:
@@ -39,8 +49,10 @@ services:
       - --config=/pd.toml
       - --log-file=/logs/pd1.log
     restart: on-failure
+    networks:
+      - my
   pd2:
-    image: pingcap/pd:latest
+    image: pingcap/pd:v6.3.0
     ports:
       - "2379"
     volumes:
@@ -58,8 +70,11 @@ services:
       - --config=/pd.toml
       - --log-file=/logs/pd2.log
     restart: on-failure
+    networks:
+      - my
+
   tikv0:
-    image: pingcap/tikv:latest
+    image: pingcap/tikv:v6.3.0
     volumes:
       - ./config/tikv.toml:/tikv.toml:ro
       - ./data:/data
@@ -67,6 +82,8 @@ services:
     command:
       - --addr=0.0.0.0:20160
       - --advertise-addr=tikv0:20160
+      - --status-addr=0.0.0.0:20180
+      - --advertise-status-addr=tikv0:20180
       - --data-dir=/data/tikv0
       - --pd=pd0:2379,pd1:2379,pd2:2379
       - --config=/tikv.toml
@@ -76,8 +93,10 @@ services:
       - "pd1"
       - "pd2"
     restart: on-failure
+    networks:
+      - my
   tikv1:
-    image: pingcap/tikv:latest
+    image: pingcap/tikv:v6.3.0
     volumes:
       - ./config/tikv.toml:/tikv.toml:ro
       - ./data:/data
@@ -85,6 +104,8 @@ services:
     command:
       - --addr=0.0.0.0:20160
       - --advertise-addr=tikv1:20160
+      - --status-addr=0.0.0.0:20180
+      - --advertise-status-addr=tikv1:20180
       - --data-dir=/data/tikv1
       - --pd=pd0:2379,pd1:2379,pd2:2379
       - --config=/tikv.toml
@@ -94,8 +115,10 @@ services:
       - "pd1"
       - "pd2"
     restart: on-failure
+    networks:
+      - my
   tikv2:
-    image: pingcap/tikv:latest
+    image: pingcap/tikv:v6.3.0
     volumes:
       - ./config/tikv.toml:/tikv.toml:ro
       - ./data:/data
@@ -103,6 +126,8 @@ services:
     command:
       - --addr=0.0.0.0:20160
       - --advertise-addr=tikv2:20160
+      - --status-addr=0.0.0.0:20180
+      - --advertise-status-addr=tikv2:20180
       - --data-dir=/data/tikv2
       - --pd=pd0:2379,pd1:2379,pd2:2379
       - --config=/tikv.toml
@@ -112,9 +137,11 @@ services:
       - "pd1"
       - "pd2"
     restart: on-failure
+    networks:
+      - my
 
   tidb:
-    image: pingcap/tidb:latest
+    image: pingcap/tidb:v6.3.0
     ports:
       - "4000:4000"
       - "10080:10080"
@@ -132,6 +159,14 @@ services:
       - "tikv1"
       - "tikv2"
     restart: on-failure
+    networks:
+      - my
+
+  # centos:
+  #   image: centos:centos7.9.2009
+  #   command: ['tail', '-f', '/dev/null']
+  #   networks:
+  #     - my
   # tispark-master:
   #   image: pingcap/tispark:v2.1.1
   #   command:
@@ -164,47 +199,59 @@ services:
   #     - tispark-master
   #   restart: on-failure
 
-  tidb-vision:
-    image: pingcap/tidb-vision:latest
-    environment:
-      PD_ENDPOINT: pd0:2379
-    ports:
-      - "8010:8010"
-    restart: on-failure
+  # tidb-vision:
+  #   image: pingcap/tidb-vision:latest
+  #   environment:
+  #     PD_ENDPOINT: pd0:2379
+  #   ports:
+  #     - "8010:8010"
+  #   restart: on-failure
+  #   networks:
+  #     - my
 
   # monitors
-  pushgateway:
-    image: prom/pushgateway:v0.3.1
-    command:
-      - --log.level=error
-    restart: on-failure
-  prometheus:
-    user: root
-    image: prom/prometheus:v2.2.1
-    command:
-      - --log.level=error
-      - --storage.tsdb.path=/data/prometheus
-      - --config.file=/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./config/pd.rules.yml:/etc/prometheus/pd.rules.yml:ro
-      - ./config/tikv.rules.yml:/etc/prometheus/tikv.rules.yml:ro
-      - ./config/tidb.rules.yml:/etc/prometheus/tidb.rules.yml:ro
-      - ./data:/data
-    restart: on-failure
-  grafana:
-    image: grafana/grafana:6.0.1
-    user: "0"
-    environment:
-      GF_LOG_LEVEL: error
-      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
-      GF_PATHS_CONFIG: /etc/grafana/grafana.ini
-    volumes:
-      - ./config/grafana:/etc/grafana
-      - ./config/dashboards:/tmp/dashboards
-      - ./data/grafana:/var/lib/grafana
-    ports:
-      - "3000:3000"
-    restart: on-failure
+  # pushgateway:
+  #   image: prom/pushgateway:v0.3.1
+  #   command:
+  #     - --log.level=error
+  #   restart: on-failure
+  #   networks:
+  #     - my
+  # prometheus:
+  #   user: root
+  #   image: prom/prometheus:v2.2.1
+  #   command:
+  #     - --log.level=error
+  #     - --storage.tsdb.path=/data/prometheus
+  #     - --config.file=/etc/prometheus/prometheus.yml
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - ./config/pd.rules.yml:/etc/prometheus/pd.rules.yml:ro
+  #     - ./config/tikv.rules.yml:/etc/prometheus/tikv.rules.yml:ro
+  #     - ./config/tidb.rules.yml:/etc/prometheus/tidb.rules.yml:ro
+  #     - ./data:/data
+  #   restart: on-failure
+  #   networks:
+  #     - my
+  # grafana:
+  #   image: grafana/grafana:6.0.1
+  #   user: "0"
+  #   environment:
+  #     GF_LOG_LEVEL: error
+  #     GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+  #     GF_PATHS_CONFIG: /etc/grafana/grafana.ini
+  #   volumes:
+  #     - ./config/grafana:/etc/grafana
+  #     - ./config/dashboards:/tmp/dashboards
+  #     - ./data/grafana:/var/lib/grafana
+  #   ports:
+  #     - "3000:3000"
+  #   restart: on-failure
+  #   networks:
+  #     - my
+networks:
+  my:
+    external:
+      name: my

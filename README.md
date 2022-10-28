@@ -14,3 +14,6 @@ docker run -d --name pythondev -v ~/newproj:/workspaces/newproj my.python.dev:1.
 尝试一下。选择上面创建的 /workspaces/newproj，新建一个main.py，保存。再去主机上看，~/newproj/main.py就躺在那。
 
 现在，可以愉快地在容（工）器（地）里面编（搬）码（砖）了。
+
+#### 查看容器ip
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' 774148f6a9c0
