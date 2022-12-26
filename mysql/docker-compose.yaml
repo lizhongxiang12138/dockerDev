@@ -1,0 +1,19 @@
+version: '3'
+
+# starts 4 docker containers running minio server instances.
+# using nginx reverse proxy, load balancing, you can access
+# it through port 9000.
+services:
+  mysql:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 'root'
+#       MYSQL_USER: 'fmi110'
+#       MYSQL_PASS: 'Aa123456'
+    restart: on-failure
+    volumes:
+      - ./data:/var/lib/mysql
+#       - ./config/my.cnf:/etc/my.cnf
+#       - ./init:/docker-entrypoint-initdb.d/
+    ports:
+      - '3306:3306'
