@@ -4,25 +4,25 @@ version: '3'
 # using nginx reverse proxy, load balancing, you can access
 # it through port 9000.
 services:
-  # mongodb:
-  #   image: mongo
-  #   restart: always
-  #   ports:
-  #       - 27017:27017
-  #   environment:
-  #       - MONGO_DATA_DIR=/data/db
-  #       - MONGO_LOG_DIR=/data/logs
-  #       - MONGO_INITDB_ROOT_USERNAME=guide
-  #       - MONGO_INITDB_ROOT_PASSWORD=guide
-  #   command: mongod --auth
-  #   volumes:
-  #       - ./db:/data/db
-  #       - ./logs:/data/logs
+  mongodb_one:
+    image: mongo
+    restart: always
+    ports:
+        - 27017:27017
+    environment:
+        - MONGO_DATA_DIR=/data/db
+        - MONGO_LOG_DIR=/data/logs
+        - MONGO_INITDB_ROOT_USERNAME=guide
+        - MONGO_INITDB_ROOT_PASSWORD=guide
+    command: mongod --auth
+    volumes:
+        - ./db_back:/data/db
+        - ./logs_back:/data/logs
   mongodb:
     image: "mongo:4.0-xenial"
     command: --replSet rs0 --smallfiles --oplogSize 128
     ports:
-      - "27017:27017"
+      - "27027:27017"
     environment:
       - MONGO_DATA_DIR=/data/db
       - MONGO_LOG_DIR=/data/logs
